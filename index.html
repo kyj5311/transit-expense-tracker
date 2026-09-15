@@ -8,21 +8,138 @@
 </head>
 <body>
 
-  <!-- UIModule을 만들 때 이 안에 대시보드/템플릿등록/사용내역/지불계산 화면을 채울 예정 -->
   <div id="app">
-    <p>아직 화면(UIModule)을 만들기 전이야. 지금은 모듈을 하나씩 순서대로 만드는 중.</p>
+    <header class="app-header">
+      <h1>대중교통 사용 내역 관리</h1>
+      <nav class="tab-bar">
+        <button type="button" class="tab-btn" data-tab="dashboard">대시보드</button>
+        <button type="button" class="tab-btn" data-tab="template">템플릿 등록</button>
+        <button type="button" class="tab-btn" data-tab="log">사용 내역</button>
+        <button type="button" class="tab-btn" data-tab="payment">지불 계산</button>
+      </nav>
+    </header>
+
+    <!-- UI-01 메인 화면(대시보드) -->
+    <section id="view-dashboard" class="view">
+      <div class="card highlight">
+        <p class="card-label">이번 달 총 지불 금액</p>
+        <p class="card-value" id="dashTotal">0원</p>
+      </div>
+
+      <div class="card-row">
+        <div class="card">
+          <p class="card-label">등록된 템플릿</p>
+          <p class="card-value" id="dashTemplateCount">0개</p>
+        </div>
+        <div class="card">
+          <p class="card-label">이번 달 사용 내역</p>
+          <p class="card-value" id="dashLogCount">0건</p>
+        </div>
+      </div>
+
+      <h2>최근 사용 내역</h2>
+      <table class="data-table">
+        <thead><tr><th>일시</th><th>노선명</th><th>구분</th></tr></thead>
+        <tbody id="dashRecentLogs"></tbody>
+      </table>
+
+      <h2>바로가기</h2>
+      <div class="shortcut-row">
+        <button type="button" data-goto="template">+ 템플릿 등록</button>
+        <button type="button" data-goto="log">사용 내역 보기</button>
+        <button type="button" data-goto="payment">지불 금액 계산</button>
+      </div>
+    </section>
+
+    <!-- UI-02 노선 템플릿 등록 화면 -->
+    <section id="view-template" class="view" hidden>
+      <h2>새 구간 추가</h2>
+      <div class="inline-form">
+        <input type="text" id="segmentName" placeholder="노선명 (예: 대구 3호선)">
+        <select id="segmentType">
+          <option value="Train">지하철</option>
+          <option value="Bus">버스</option>
+        </select>
+        <select id="segmentRegion"></select>
+        <select id="segmentAgeType">
+          <option value="Adult">성인</option>
+          <option value="Youth">청소년</option>
+          <option value="Child">어린이</option>
+        </select>
+        <label class="checkbox-label"><input type="checkbox" id="segmentIsTransfer"> 환승</label>
+        <button type="button" id="addSegmentBtn" disabled>구간 추가</button>
+      </div>
+
+      <div id="draftSegmentList" class="draft-list"></div>
+
+      <div class="inline-form">
+        <input type="text" id="templateNameInput" placeholder="템플릿 이름 (예: 출근길)">
+        <button type="button" id="saveTemplateBtn" disabled>템플릿으로 저장</button>
+      </div>
+
+      <p id="templateMessage" class="message"></p>
+
+      <h2>등록된 템플릿 목록</h2>
+      <table class="data-table">
+        <thead><tr><th>템플릿명</th><th>구간 수</th><th>관리</th></tr></thead>
+        <tbody id="templateListBody"></tbody>
+      </table>
+    </section>
+
+    <!-- UI-03 사용 내역 목록 화면 -->
+    <section id="view-log" class="view" hidden>
+      <div class="toolbar">
+        <label>조회:
+          <select id="logFilterSelect">
+            <option value="all">전체</option>
+            <option value="month">이번 달</option>
+          </select>
+        </label>
+        <button type="button" id="calcSelectedBtn">선택한 내역만 지불 계산하기</button>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th></th><th>일시</th><th>노선명</th><th>구분</th><th>환승</th><th>관리</th></tr>
+        </thead>
+        <tbody id="logListBody"></tbody>
+      </table>
+    </section>
+
+    <!-- UI-04 지불 금액 계산 화면 -->
+    <section id="view-payment" class="view" hidden>
+      <div class="toolbar" id="paymentScopeToolbar">
+        <select id="paymentScopeSelect">
+          <option value="month">이번 달</option>
+          <option value="all">전체</option>
+        </select>
+        <button type="button" id="calcPaymentBtn">계산하기</button>
+      </div>
+      <p id="paymentSelectedNotice" class="message" hidden></p>
+
+      <div class="card highlight">
+        <p class="card-label">총 지불 금액</p>
+        <p class="card-value" id="paymentTotal">0원</p>
+      </div>
+
+      <h2>상세 내역</h2>
+      <table class="data-table">
+        <thead><tr><th>노선명</th><th>기본요금</th><th>환승 적용</th><th>금액</th></tr></thead>
+        <tbody id="paymentDetailBody"></tbody>
+      </table>
+    </section>
   </div>
 
   <!--
     스크립트는 "의존하는 모듈이 먼저" 오도록 순서를 지켜서 불러와야 한다.
     StorageModule은 아무것도 의존하지 않고, 나머지 모듈들이 전부 StorageModule의 save()/load()를
-    호출하므로 항상 제일 먼저 로드되어야 한다.
+    호출하므로 항상 제일 먼저 로드되어야 한다. UIModule은 나머지 모든 모듈을 사용하므로 맨 마지막.
   -->
   <script src="js/storageModule.js"></script>
   <script src="js/fareModule.js"></script>
   <script src="js/templateModule.js"></script>
   <script src="js/logModule.js"></script>
   <script src="js/paymentCalcModule.js"></script>
+  <script src="js/uiModule.js"></script>
 
 </body>
 </html>
