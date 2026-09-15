@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>대중교통 사용 내역 관리</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- UIModule을 만들 때 이 안에 대시보드/템플릿등록/사용내역/지불계산 화면을 채울 예정 -->
+  <div id="app">
+    <p>아직 화면(UIModule)을 만들기 전이야. 지금은 모듈을 하나씩 순서대로 만드는 중.</p>
+  </div>
+
+  <!--
+    스크립트는 "의존하는 모듈이 먼저" 오도록 순서를 지켜서 불러와야 한다.
+    예: FareModule은 StorageModule의 함수를 호출하므로, StorageModule.js가 먼저 로드되어야 한다.
+    지금 단계에서는 FareModule만 작성했으므로 fareModule.js만 불러온다.
+  -->
+  <script src="js/fareModule.js"></script>
+
+</body>
+</html>

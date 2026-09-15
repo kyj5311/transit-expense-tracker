@@ -1,0 +1,18 @@
+/* UIModule 단계에서 본격적으로 채울 스타일시트. 지금은 최소한의 뼈대만 둔다. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Malgun Gothic", sans-serif;
+  background: #f4f6fa;
+  color: #1a1f36;
+}
+
+#app {
+  max-width: 720px;
+  margin: 40px auto;
+  padding: 24px;
+}
