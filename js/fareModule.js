@@ -29,13 +29,13 @@ let fareData = null;
 // LocalStorage에 저장된 fareData가 있으면 그대로 불러오고,
 // 없으면(최초 실행) 기본 요금 데이터를 사용하고 StorageModule을 통해 1회 저장한다.
 function initFareData() {
-  const loaded = StorageModule.load('fareData');
+  const loaded = load('fareData');
 
   if (loaded) {
     fareData = loaded;
   } else {
     fareData = DEFAULT_FARE_DATA;
-    StorageModule.save('fareData', fareData);
+    save('fareData', fareData);
   }
 
   return fareData;

@@ -15,10 +15,13 @@
 
   <!--
     스크립트는 "의존하는 모듈이 먼저" 오도록 순서를 지켜서 불러와야 한다.
-    예: FareModule은 StorageModule의 함수를 호출하므로, StorageModule.js가 먼저 로드되어야 한다.
-    지금 단계에서는 FareModule만 작성했으므로 fareModule.js만 불러온다.
+    StorageModule은 아무것도 의존하지 않고, 나머지 모듈들이 전부 StorageModule의 save()/load()를
+    호출하므로 항상 제일 먼저 로드되어야 한다.
   -->
+  <script src="js/storageModule.js"></script>
   <script src="js/fareModule.js"></script>
+  <script src="js/templateModule.js"></script>
+  <script src="js/logModule.js"></script>
 
 </body>
 </html>
