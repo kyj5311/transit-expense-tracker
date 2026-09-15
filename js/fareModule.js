@@ -17,6 +17,14 @@ const DEFAULT_FARE_DATA = {
       Name: '대구',
       Train: { Child: 1000, Youth: 1350, Adult: 2000, TransferDC: 0.1 },
       Bus:   { Child: 750,  Youth: 1000, Adult: 1500, TransferDC: 0.1 }
+    },
+    // 구미: 대구-금오공과대학교 통학 테스트 데이터(dev-seed/daegu-kumoh-template.js)를 위해 추가한 지역.
+    // Train은 대경선/무궁화호 등 대구↔구미 기차 구간, Bus는 구미역↔금오공대 셔틀/시내버스를 가정한 값이며,
+    // 정확한 실제 운임을 조사한 수치가 아니라 테스트용으로 어림잡은 값이다.
+    {
+      Name: '구미',
+      Train: { Child: 1300, Youth: 2080, Adult: 2600, TransferDC: 0.2 },
+      Bus:   { Child: 700,  Youth: 1120, Adult: 1400, TransferDC: 0.2 }
     }
   ]
 };
