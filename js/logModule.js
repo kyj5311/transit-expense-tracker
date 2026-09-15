@@ -7,6 +7,22 @@
 // 런타임에 올려두고 쓰는 사용 내역 목록 (5.1의 in-memory 변수 `logList`에 해당).
 let logList = [];
 
+// 마지막으로 발급한 Time 값(ms)을 기억해뒀다가 항상 그보다 큰 값을 내어준다.
+// Time은 Log를 구분하는 식별 키(5.2)라서 절대 겹치면 안 되는데, 그냥 new Date()만 쓰면
+// 같은 밀리초 안에 여러 번 호출될 때(예: 템플릿 한 번 등록으로 구간 여러 개를 연달아
+// push할 때) 값이 겹칠 수 있다. 실제로 addLogFromTemplate 직후 곧바로 addLog를 호출했더니
+// 두 내역의 Time이 같아져서, "사용 내역" 화면에서 한 줄만 [수정]을 눌렀는데 Time이 같은
+// 다른 줄까지 같이 수정 모드로 바뀌는 버그가 있었다. issueLogTime()은 실제 시각이 마지막
+// 발급값보다 크면 그대로 쓰고, 아니면(같거나 과거) 마지막 발급값 + 1ms를 써서 항상
+// 유일하고 순서가 어긋나지 않는 값을 보장한다.
+let lastIssuedTime = 0;
+
+function issueLogTime() {
+  const now = Date.now();
+  lastIssuedTime = now > lastIssuedTime ? now : lastIssuedTime + 1;
+  return new Date(lastIssuedTime).toISOString();
+}
+
 // 앱 실행 시마다 호출한다. LocalStorage에 저장된 logData가 있으면 불러오고, 없으면 빈 배열로 시작한다.
 function initLogData() {
   const loaded = load('logData');
@@ -30,11 +46,9 @@ function addLogFromTemplate(templateName) {
     return false;
   }
 
-  // 같은 템플릿의 구간들을 한 번에 등록하므로, 등록 시각(Time)이 전부 똑같아지지 않도록
-  // 구간 순서(i)만큼 1밀리초씩 밀어서 각 내역을 구분할 수 있는 고유한 Time 값을 만든다.
-  template.TPList.forEach(function (segment, i) {
+  template.TPList.forEach(function (segment) {
     logList.push({
-      Time: new Date(Date.now() + i).toISOString(),
+      Time: issueLogTime(),
       Name: segment.Name,
       Type: segment.Type,
       Region: segment.Region,
@@ -58,7 +72,7 @@ function addLog(logObj) {
   }
 
   logList.push({
-    Time: new Date().toISOString(),
+    Time: issueLogTime(),
     Name: name,
     Type: logObj.Type,
     Region: logObj.Region,
