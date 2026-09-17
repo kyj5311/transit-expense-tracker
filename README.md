@@ -6,6 +6,8 @@
 
 자세한 요구사항과 설계 근거는 [docs/03_설계서](docs/03_설계서)의 소프트웨어 설계서(v1.6)를 참고하세요.
 
+**배포 링크(GitHub Pages):** https://kyj5311.github.io/transit-expense-tracker/
+
 ## 특징 / 제약사항
 
 - 순수 HTML/CSS/JavaScript(ES6)로만 작성 — 외부 라이브러리, 빌드 도구 없음
@@ -15,9 +17,15 @@
 
 ## 실행 방법
 
+**방법 A — 바로 접속:** https://kyj5311.github.io/transit-expense-tracker/ 를 연다.
+
+**방법 B — 로컬에서 실행:**
 1. 이 폴더를 통째로 다운로드/클론한다.
 2. `index.html`을 Chrome, Edge 등 브라우저로 더블클릭해서 연다.
-3. 최초 실행 시 기본 요금 데이터(서울/대구)가 자동으로 LocalStorage에 저장된다.
+
+어느 방법이든 최초 실행 시 기본 요금 데이터(서울/대구/구미)가 자동으로 LocalStorage에
+저장된다. 단, LocalStorage는 브라우저+주소(origin) 단위로 분리되어 있어서, 배포 사이트에서
+등록한 데이터와 로컬 `index.html`에서 등록한 데이터는 서로 공유되지 않는다.
 
 ## 사용 방법
 
