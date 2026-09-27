@@ -99,13 +99,18 @@ function addLog(logObj) {
 // 등록 시각(Time)으로 사용 내역 1건을 찾아 필드를 수정한다. (FR-06)
 // updatedFields에 들어있는 값만 덮어쓰고, 나머지 필드는 그대로 유지한다.
 // 기존 객체를 직접 고치면 저장 실패 시 되돌릴 수 없으므로, 복사본(updated)에 반영해서 저장한다.
-// 성공하면 true, 해당 Time의 내역이 없거나 저장에 실패하면 false를 반환한다.
+// 노선명을 공백만 남게(trim 후 빈 문자열) 고치려 하면 등록 때와 마찬가지로 거부한다 (EH-01).
+// 성공하면 true, 해당 Time의 내역이 없거나 노선명이 비었거나 저장에 실패하면 false를 반환한다.
 function updateLog(time, updatedFields) {
   const target = logList.find(function (log) {
     return log.Time === time;
   });
 
   if (!target) {
+    return false;
+  }
+
+  if (typeof updatedFields.Name === 'string' && updatedFields.Name.trim() === '') {
     return false;
   }
 

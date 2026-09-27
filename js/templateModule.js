@@ -25,6 +25,9 @@ function initTemplateData() {
 //           여기서는 문자열 정제가 필요 없다.
 // 이름이 비어 있거나 구간이 하나도 없으면 등록하지 않고 false를 반환한다.
 // (화면에서는 이 조건일 때 등록 버튼 자체를 비활성화하지만, 데이터 계층에서도 한 번 더 방어한다.)
+// 같은 이름(trim 후 기준)의 템플릿이 이미 있어도 false를 반환한다. 템플릿명은 템플릿을 찾는
+// 식별 키(5.2)라서, 중복되면 getTemplateByName()/deleteTemplate()이 항상 첫 번째 것만 찾게 되어
+// 두 번째 템플릿은 내역 등록도 삭제도 할 수 없게 되기 때문이다.
 //
 // 저장 순서 (EH-02, 5.1 ⑤ "LocalStorage와 런타임 데이터를 항상 일치"):
 // templateList를 바로 고치지 않고, 변경을 반영한 "새 배열"을 먼저 만들어 저장해본다.
@@ -35,6 +38,10 @@ function addTemplate(templateObj) {
   const name = templateObj.Name.trim();
 
   if (!name || !templateObj.TPList || templateObj.TPList.length === 0) {
+    return false;
+  }
+
+  if (getTemplateByName(name)) {
     return false;
   }
 

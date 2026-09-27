@@ -197,6 +197,14 @@ function bindTemplateFormEvents() {
 
   document.getElementById('saveTemplateBtn').addEventListener('click', function () {
     const messageEl = document.getElementById('templateMessage');
+
+    // 같은 이름의 템플릿이 이미 있으면 addTemplate()도 거부하지만, 그 경우 false만 돌아와서
+    // 이유를 알 수 없으므로 화면에서 먼저 확인해 구체적인 안내를 띄운다. 입력값은 그대로 둔다.
+    if (getTemplateByName(templateNameInput.value.trim())) {
+      messageEl.textContent = '이미 같은 이름의 템플릿이 있습니다. 다른 이름을 입력하세요.';
+      return;
+    }
+
     const ok = addTemplate({ Name: templateNameInput.value, TPList: draftSegments });
 
     if (ok) {
@@ -326,6 +334,15 @@ function bindLogScreenEvents() {
         editingLogTime = null;
         renderLogScreen();
       }
+    }
+  });
+
+  // 수정 모드의 노선명 입력칸이 비면(trim 기준) [저장] 버튼을 비활성화한다 (EH-01).
+  // 등록 화면의 [구간 추가] 버튼과 같은 방식이며, updateLog()도 빈 이름을 한 번 더 거부한다.
+  tbody.addEventListener('input', function (e) {
+    if (e.target.classList.contains('edit-name-input')) {
+      const saveBtn = e.target.closest('tr').querySelector('.save-log-btn');
+      saveBtn.disabled = e.target.value.trim().length === 0;
     }
   });
 
