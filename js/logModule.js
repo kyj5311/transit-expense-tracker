@@ -17,6 +17,7 @@ let logList = [];
 // 유일하고 순서가 어긋나지 않는 값을 보장한다.
 let lastIssuedTime = 0;
 
+// 새 내역에 붙일 겹치지 않는 등록 시각(ISO 문자열)을 발급한다. (동작 원리는 바로 위 설명 참고)
 function issueLogTime() {
   const now = Date.now();
   lastIssuedTime = now > lastIssuedTime ? now : lastIssuedTime + 1;

@@ -82,15 +82,17 @@ function filterLogsByScope(scope) {
 // 내역 한 건의 기본요금/환승할인율/실제금액을 함께 반환한다 (상세 내역 표 표시용).
 // 실제 지불 금액(finalFare)은 PaymentCalcModule의 calculateSingleFare를 그대로 재사용해서,
 // 여기서 따로 계산한 값과 총 합계 계산 로직이 어긋나지 않도록 한다.
+// 요금 데이터에 없는 지역 등이라 요금을 찾지 못하면 null을 반환한다 (화면에는 "요금 정보 없음" 표시).
 function getFareDetail(log, fareData) {
-  const region = fareData.Region.find(function (r) {
-    return r.Name === log.Region;
-  });
-  const fareTable = region[log.Type];
+  const fare = findFare(log, fareData);
+
+  if (!fare) {
+    return null;
+  }
 
   return {
-    baseFare: fareTable[log.AgeType],
-    transferDC: fareTable.TransferDC,
+    baseFare: fare.baseFare,
+    transferDC: fare.transferDC,
     finalFare: calculateSingleFare(log, fareData)
   };
 }
@@ -115,6 +117,8 @@ function switchTab(tabName) {
 
 /* ---------- UI-01 대시보드 ---------- */
 
+// UI-01 대시보드를 그린다: 이번 달 총 지불 금액, 등록된 템플릿 수, 이번 달 내역 건수,
+// 최근 사용 내역 5건(최신순).
 function renderDashboard() {
   const monthLogs = filterLogsByScope('month');
   const total = calculatePayment(monthLogs, fareData);
@@ -150,6 +154,8 @@ function updateSaveTemplateBtnState() {
   document.getElementById('saveTemplateBtn').disabled = !(draftSegments.length > 0 && nameFilled);
 }
 
+// UI-02 노선 템플릿 등록 화면을 그린다: 저장 전 임시 구간 목록(draftSegments)과
+// 등록된 템플릿 목록(구간 수, [내역등록]/[삭제] 버튼)을 표시하고 저장 버튼 상태를 갱신한다.
 function renderTemplateScreen() {
   const draftEl = document.getElementById('draftSegmentList');
 
@@ -173,6 +179,8 @@ function renderTemplateScreen() {
   updateSaveTemplateBtnState();
 }
 
+// UI-02 화면의 이벤트를 연결한다: 구간 추가, 템플릿 저장, 임시 구간 제거,
+// 템플릿별 [내역등록]/[삭제]. (앱 시작 시 1회 호출)
 function bindTemplateFormEvents() {
   const segmentNameInput = document.getElementById('segmentName');
   const addSegmentBtn = document.getElementById('addSegmentBtn');
@@ -256,6 +264,8 @@ function bindTemplateFormEvents() {
 
 /* ---------- UI-03 사용 내역 목록 ---------- */
 
+// UI-03 사용 내역 목록을 조회 단위 select 기준으로 최신순으로 그린다.
+// 수정 중인 행(editingLogTime)은 입력칸으로, 나머지 행은 체크박스와 [수정]/[삭제] 버튼으로 표시한다.
 function renderLogScreen() {
   const scope = document.getElementById('logFilterSelect').value;
   const logs = filterLogsByScope(scope).slice().sort(function (a, b) {
@@ -297,6 +307,8 @@ function renderLogScreen() {
   }).join('');
 }
 
+// UI-03 화면의 이벤트를 연결한다: 조회 단위 변경, 선택 내역 지불 계산, 행별 수정/삭제/저장/취소,
+// 체크박스 선택. (앱 시작 시 1회 호출)
 function bindLogScreenEvents() {
   document.getElementById('logFilterSelect').addEventListener('change', renderLogScreen);
 
@@ -366,6 +378,9 @@ function bindLogScreenEvents() {
 
 /* ---------- UI-04 지불 금액 계산 ---------- */
 
+// UI-04 지불 금액 계산 화면을 그린다.
+// "선택한 내역만 계산"으로 넘어온 경우(selectedForPayment)엔 그 내역들을, 아니면 조회 단위 select
+// 기준 내역을 대상으로 총 지불 금액(PaymentCalcModule)과 내역별 상세 표를 표시한다.
 function renderPaymentScreen() {
   const noticeEl = document.getElementById('paymentSelectedNotice');
   let targetLogs;
@@ -386,6 +401,13 @@ function renderPaymentScreen() {
   const tbody = document.getElementById('paymentDetailBody');
   tbody.innerHTML = targetLogs.map(function (log) {
     const detail = getFareDetail(log, fareData);
+
+    // 요금 데이터에 없는 지역 등이라 요금을 찾지 못한 내역: 멈추지 않고 0원으로 계산됐음을 표시한다.
+    if (!detail) {
+      return '<tr><td>' + escapeHtml(log.Name) + '</td><td>요금 정보 없음</td><td>-</td><td>' +
+        formatWon(0) + '</td></tr>';
+    }
+
     const transferText = log.IsTransfer ? '× ' + Math.round(detail.transferDC * 100) + '%' : '-';
 
     return '<tr><td>' + escapeHtml(log.Name) + '</td><td>' + formatWon(detail.baseFare) + '</td><td>' +
@@ -393,6 +415,7 @@ function renderPaymentScreen() {
   }).join('');
 }
 
+// UI-04 지불 금액 계산 화면의 [계산하기] 버튼 이벤트를 연결한다. (앱 시작 시 1회 호출)
 function bindPaymentScreenEvents() {
   // "계산하기"를 누르면 선택 모드(selectedForPayment)를 해제하고 조회 단위(select) 기준으로 되돌아간다.
   document.getElementById('calcPaymentBtn').addEventListener('click', function () {
@@ -403,6 +426,7 @@ function bindPaymentScreenEvents() {
 
 /* ---------- 앱 시작 ---------- */
 
+// 상단 탭 버튼(data-tab)과 대시보드 바로가기 버튼(data-goto)에 화면 전환 이벤트를 연결한다. (앱 시작 시 1회 호출)
 function bindTabEvents() {
   document.querySelectorAll('.tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
