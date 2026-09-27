@@ -204,6 +204,7 @@ function bindTemplateFormEvents() {
       templateNameInput.value = '';
       messageEl.textContent = '템플릿이 등록되었습니다.';
     } else {
+      // 이름·구간이 비었거나 LocalStorage 저장에 실패한 경우. 입력 중이던 구간은 그대로 남겨둔다.
       messageEl.textContent = '템플릿 등록에 실패했습니다. 이름과 구간을 확인하세요.';
     }
     renderTemplateScreen();
@@ -229,7 +230,9 @@ function bindTemplateFormEvents() {
       document.getElementById('templateMessage').textContent =
         ok ? '"' + name + '" 템플릿으로 사용 내역이 등록되었습니다.' : '내역 등록에 실패했습니다.';
     } else if (e.target.classList.contains('delete-template-btn')) {
-      deleteTemplate(name);
+      if (!deleteTemplate(name)) {
+        document.getElementById('templateMessage').textContent = '템플릿 삭제에 실패했습니다.';
+      }
       renderTemplateScreen();
     }
   });
@@ -305,18 +308,24 @@ function bindLogScreenEvents() {
       editingLogTime = null;
       renderLogScreen();
     } else if (e.target.classList.contains('delete-log-btn')) {
-      deleteLog(time);
-      selectedLogTimes.delete(time);
+      // 삭제(저장)에 실패하면 내역이 목록에 그대로 남으므로 체크 상태도 유지한다 (EH-02).
+      if (deleteLog(time)) {
+        selectedLogTimes.delete(time);
+      }
       renderLogScreen();
     } else if (e.target.classList.contains('save-log-btn')) {
       const row = e.target.closest('tr');
-      updateLog(time, {
+      const ok = updateLog(time, {
         Name: row.querySelector('.edit-name-input').value,
         Type: row.querySelector('.edit-type-select').value,
         IsTransfer: row.querySelector('.edit-transfer-checkbox').checked
       });
-      editingLogTime = null;
-      renderLogScreen();
+
+      // 저장에 실패하면 수정 모드를 유지해서, 사용자가 입력해둔 값이 다시 그려지며 사라지지 않게 한다.
+      if (ok) {
+        editingLogTime = null;
+        renderLogScreen();
+      }
     }
   });
 

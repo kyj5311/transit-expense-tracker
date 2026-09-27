@@ -38,7 +38,12 @@ function initLogData() {
 //   ② TP List를 순회하며 구간마다 내역 객체 생성
 //   ③ logList에 추가 후 저장
 //
-// 템플릿을 찾지 못하면 false를 반환한다 (예외 처리).
+// 템플릿을 찾지 못하거나 저장에 실패하면 false를 반환한다 (예외 처리).
+//
+// 저장 순서 (EH-02, 5.1 ⑤ "LocalStorage와 런타임 데이터를 항상 일치"):
+// logList를 바로 고치지 않고, 변경을 반영한 "새 배열"을 먼저 만들어 저장해본다.
+// 저장에 성공했을 때만 logList를 새 배열로 바꾸므로, 저장이 실패하면 logList는 이전 상태
+// 그대로 남는다. 이 파일의 addLog / updateLog / deleteLog도 모두 같은 순서를 따른다.
 function addLogFromTemplate(templateName) {
   const template = getTemplateByName(templateName);
 
@@ -46,18 +51,28 @@ function addLogFromTemplate(templateName) {
     return false;
   }
 
-  template.TPList.forEach(function (segment) {
-    logList.push({
+  const newLogs = template.TPList.map(function (segment) {
+    return {
       Time: issueLogTime(),
       Name: segment.Name,
       Type: segment.Type,
       Region: segment.Region,
       AgeType: segment.AgeType,
       IsTransfer: segment.IsTransfer
-    });
+    };
   });
 
-  save('logData', logList);
+  return commitLogList(logList.concat(newLogs));
+}
+
+// 새 내역 배열(nextList)을 저장해보고, 성공했을 때만 logList를 교체한다.
+// 저장 성공 여부(true/false)를 그대로 반환한다.
+function commitLogList(nextList) {
+  if (!save('logData', nextList)) {
+    return false;
+  }
+
+  logList = nextList;
   return true;
 }
 
@@ -71,22 +86,20 @@ function addLog(logObj) {
     return false;
   }
 
-  logList.push({
+  return commitLogList(logList.concat([{
     Time: issueLogTime(),
     Name: name,
     Type: logObj.Type,
     Region: logObj.Region,
     AgeType: logObj.AgeType,
     IsTransfer: !!logObj.IsTransfer
-  });
-
-  save('logData', logList);
-  return true;
+  }]));
 }
 
 // 등록 시각(Time)으로 사용 내역 1건을 찾아 필드를 수정한다. (FR-06)
 // updatedFields에 들어있는 값만 덮어쓰고, 나머지 필드는 그대로 유지한다.
-// 성공하면 true, 해당 Time의 내역이 없으면 false를 반환한다.
+// 기존 객체를 직접 고치면 저장 실패 시 되돌릴 수 없으므로, 복사본(updated)에 반영해서 저장한다.
+// 성공하면 true, 해당 Time의 내역이 없거나 저장에 실패하면 false를 반환한다.
 function updateLog(time, updatedFields) {
   const target = logList.find(function (log) {
     return log.Time === time;
@@ -96,30 +109,33 @@ function updateLog(time, updatedFields) {
     return false;
   }
 
-  if (typeof updatedFields.Name === 'string') {
-    target.Name = updatedFields.Name.trim();
-  }
-  if (updatedFields.Type) target.Type = updatedFields.Type;
-  if (updatedFields.Region) target.Region = updatedFields.Region;
-  if (updatedFields.AgeType) target.AgeType = updatedFields.AgeType;
-  if (typeof updatedFields.IsTransfer === 'boolean') target.IsTransfer = updatedFields.IsTransfer;
+  const updated = Object.assign({}, target);
 
-  save('logData', logList);
-  return true;
+  if (typeof updatedFields.Name === 'string') {
+    updated.Name = updatedFields.Name.trim();
+  }
+  if (updatedFields.Type) updated.Type = updatedFields.Type;
+  if (updatedFields.Region) updated.Region = updatedFields.Region;
+  if (updatedFields.AgeType) updated.AgeType = updatedFields.AgeType;
+  if (typeof updatedFields.IsTransfer === 'boolean') updated.IsTransfer = updatedFields.IsTransfer;
+
+  return commitLogList(logList.map(function (log) {
+    return log === target ? updated : log;
+  }));
 }
 
 // 등록 시각(Time)으로 사용 내역 1건을 삭제한다. (FR-06)
-// 성공하면 true, 해당 Time의 내역이 없으면 false를 반환한다.
+// 성공하면 true, 해당 Time의 내역이 없거나 저장에 실패하면 false를 반환한다.
 function deleteLog(time) {
-  const index = logList.findIndex(function (log) {
+  const exists = logList.some(function (log) {
     return log.Time === time;
   });
 
-  if (index === -1) {
+  if (!exists) {
     return false;
   }
 
-  logList.splice(index, 1);
-  save('logData', logList);
-  return true;
+  return commitLogList(logList.filter(function (log) {
+    return log.Time !== time;
+  }));
 }

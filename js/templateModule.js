@@ -25,6 +25,12 @@ function initTemplateData() {
 //           여기서는 문자열 정제가 필요 없다.
 // 이름이 비어 있거나 구간이 하나도 없으면 등록하지 않고 false를 반환한다.
 // (화면에서는 이 조건일 때 등록 버튼 자체를 비활성화하지만, 데이터 계층에서도 한 번 더 방어한다.)
+//
+// 저장 순서 (EH-02, 5.1 ⑤ "LocalStorage와 런타임 데이터를 항상 일치"):
+// templateList를 바로 고치지 않고, 변경을 반영한 "새 배열"을 먼저 만들어 저장해본다.
+// 저장에 성공했을 때만 templateList를 새 배열로 바꾸고, 실패하면 false를 반환한다.
+// 이렇게 하면 저장이 실패해도 templateList는 한 번도 바뀌지 않았으므로 되돌릴 필요가 없고,
+// "화면엔 등록됐는데 새로고침하면 사라지는" 불일치가 생기지 않는다. (아래 deleteTemplate도 동일)
 function addTemplate(templateObj) {
   const name = templateObj.Name.trim();
 
@@ -32,8 +38,13 @@ function addTemplate(templateObj) {
     return false;
   }
 
-  templateList.push({ Name: name, TPList: templateObj.TPList });
-  save('templateData', templateList);
+  const nextList = templateList.concat([{ Name: name, TPList: templateObj.TPList }]);
+
+  if (!save('templateData', nextList)) {
+    return false;
+  }
+
+  templateList = nextList;
   return true;
 }
 
@@ -46,7 +57,7 @@ function getTemplateByName(templateName) {
 }
 
 // 템플릿명으로 템플릿을 목록에서 삭제한다. (FR-06)
-// 성공하면 true, 해당 이름의 템플릿이 없으면 false를 반환한다.
+// 성공하면 true, 해당 이름의 템플릿이 없거나 저장에 실패하면 false를 반환한다 (저장 실패 시 목록은 그대로).
 function deleteTemplate(templateName) {
   const index = templateList.findIndex(function (template) {
     return template.Name === templateName;
@@ -56,7 +67,14 @@ function deleteTemplate(templateName) {
     return false;
   }
 
-  templateList.splice(index, 1);
-  save('templateData', templateList);
+  const nextList = templateList.filter(function (template, i) {
+    return i !== index;
+  });
+
+  if (!save('templateData', nextList)) {
+    return false;
+  }
+
+  templateList = nextList;
   return true;
 }
