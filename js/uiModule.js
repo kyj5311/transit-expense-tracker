@@ -19,7 +19,7 @@ let draftSegments = [];
 let selectedLogTimes = new Set();
 
 // "선택한 내역만 지불 계산하기"로 넘어온 내역 배열. null이면 지불 계산 화면은
-// 조회 단위(이번 달/전체) 기준으로 계산한다.
+// 조회 단위(이번 달/올해/전체) 기준으로 계산한다.
 let selectedForPayment = null;
 
 // 사용 내역 목록에서 지금 수정 중인 내역의 Time. null이면 아무 것도 수정 중이 아니다.
@@ -60,12 +60,20 @@ function getYearMonthKey(isoStringOrDate) {
   return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
 }
 
-// scope('all' | 'month')에 따라 logList에서 계산/조회 대상 내역만 골라 반환한다.
+// scope('all' | 'month' | 'year')에 따라 logList에서 계산/조회 대상 내역만 골라 반환한다.
+// 'month'는 이번 달, 'year'는 올해(1월~12월) 내역이다 (설계서 3.3·7.1의 조회 단위 "월/년").
 function filterLogsByScope(scope) {
   if (scope === 'month') {
     const currentKey = getYearMonthKey(new Date());
     return logList.filter(function (log) {
       return getYearMonthKey(log.Time) === currentKey;
+    });
+  }
+  if (scope === 'year') {
+    // getYearMonthKey와 같은 이유로, 문자열을 자르지 않고 Date의 로컬 시간 기준 연도로 비교한다.
+    const currentYear = new Date().getFullYear();
+    return logList.filter(function (log) {
+      return new Date(log.Time).getFullYear() === currentYear;
     });
   }
   return logList.slice();
