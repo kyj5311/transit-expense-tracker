@@ -15,6 +15,11 @@ const AGE_LABELS = { Child: '어린이', Youth: '청소년', Adult: '성인' };
 // "템플릿으로 저장"을 눌러야 실제로 TemplateModule.addTemplate()에 전달되고 비워진다.
 let draftSegments = [];
 
+// 템플릿 등록 화면에서 지금 수정 중인 템플릿의 (수정 전) 이름. null이면 새 템플릿 등록 모드다.
+// [수정]을 누르면 그 템플릿의 이름·구간을 등록 폼(templateNameInput, draftSegments)에 불러오고,
+// 저장 버튼은 addTemplate() 대신 updateTemplate()을 호출한다.
+let editingTemplateName = null;
+
 // 사용 내역 목록 화면에서 체크박스로 선택한 내역들의 Time 값 모음.
 let selectedLogTimes = new Set();
 
@@ -154,9 +159,23 @@ function updateSaveTemplateBtnState() {
   document.getElementById('saveTemplateBtn').disabled = !(draftSegments.length > 0 && nameFilled);
 }
 
+// 템플릿 폼을 비우고 "새 템플릿 등록" 모드로 되돌린다 (등록/수정 완료, 수정 취소 시 호출).
+function resetTemplateForm() {
+  editingTemplateName = null;
+  draftSegments = [];
+  document.getElementById('templateNameInput').value = '';
+}
+
 // UI-02 노선 템플릿 등록 화면을 그린다: 저장 전 임시 구간 목록(draftSegments)과
-// 등록된 템플릿 목록(구간 수, [내역등록]/[삭제] 버튼)을 표시하고 저장 버튼 상태를 갱신한다.
+// 등록된 템플릿 목록(구간 수, [내역등록]/[수정]/[삭제] 버튼)을 표시하고 저장 버튼 상태를 갱신한다.
+// 수정 모드(editingTemplateName)일 때는 제목·저장 버튼 문구를 바꾸고 [수정 취소] 버튼을 보여준다.
 function renderTemplateScreen() {
+  const isEditing = editingTemplateName !== null;
+  document.getElementById('templateFormTitle').textContent =
+    isEditing ? '템플릿 수정: ' + editingTemplateName : '새 구간 추가';
+  document.getElementById('saveTemplateBtn').textContent = isEditing ? '수정 내용 저장' : '템플릿으로 저장';
+  document.getElementById('cancelTemplateEditBtn').hidden = !isEditing;
+
   const draftEl = document.getElementById('draftSegmentList');
 
   if (draftSegments.length === 0) {
@@ -173,14 +192,15 @@ function renderTemplateScreen() {
   tbody.innerHTML = templateList.map(function (tpl) {
     return '<tr><td>' + escapeHtml(tpl.Name) + '</td><td>' + tpl.TPList.length + '구간</td><td>' +
       '<button type="button" class="register-log-btn" data-name="' + escapeHtml(tpl.Name) + '">내역등록</button>' +
+      '<button type="button" class="edit-template-btn" data-name="' + escapeHtml(tpl.Name) + '">수정</button>' +
       '<button type="button" class="delete-template-btn" data-name="' + escapeHtml(tpl.Name) + '">삭제</button></td></tr>';
   }).join('');
 
   updateSaveTemplateBtnState();
 }
 
-// UI-02 화면의 이벤트를 연결한다: 구간 추가, 템플릿 저장, 임시 구간 제거,
-// 템플릿별 [내역등록]/[삭제]. (앱 시작 시 1회 호출)
+// UI-02 화면의 이벤트를 연결한다: 구간 추가, 템플릿 저장(등록/수정), 수정 취소, 임시 구간 제거,
+// 템플릿별 [내역등록]/[수정]/[삭제]. (앱 시작 시 1회 호출)
 function bindTemplateFormEvents() {
   const segmentNameInput = document.getElementById('segmentName');
   const addSegmentBtn = document.getElementById('addSegmentBtn');
@@ -211,26 +231,37 @@ function bindTemplateFormEvents() {
   const templateNameInput = document.getElementById('templateNameInput');
   templateNameInput.addEventListener('input', updateSaveTemplateBtnState);
 
+  // 등록 모드면 addTemplate(), 수정 모드면 updateTemplate()을 호출한다.
   document.getElementById('saveTemplateBtn').addEventListener('click', function () {
     const messageEl = document.getElementById('templateMessage');
+    const newName = templateNameInput.value.trim();
+    const isEditing = editingTemplateName !== null;
 
-    // 같은 이름의 템플릿이 이미 있으면 addTemplate()도 거부하지만, 그 경우 false만 돌아와서
-    // 이유를 알 수 없으므로 화면에서 먼저 확인해 구체적인 안내를 띄운다. 입력값은 그대로 둔다.
-    if (getTemplateByName(templateNameInput.value.trim())) {
+    // 같은 이름의 템플릿이 이미 있으면 addTemplate()/updateTemplate()도 거부하지만, 그 경우 false만
+    // 돌아와서 이유를 알 수 없으므로 화면에서 먼저 확인해 구체적인 안내를 띄운다. 입력값은 그대로 둔다.
+    // (수정 모드에서 이름을 그대로 둔 경우는 자기 자신이므로 중복이 아니다.)
+    if (getTemplateByName(newName) && newName !== editingTemplateName) {
       messageEl.textContent = '이미 같은 이름의 템플릿이 있습니다. 다른 이름을 입력하세요.';
       return;
     }
 
-    const ok = addTemplate({ Name: templateNameInput.value, TPList: draftSegments });
+    const templateObj = { Name: templateNameInput.value, TPList: draftSegments };
+    const ok = isEditing ? updateTemplate(editingTemplateName, templateObj) : addTemplate(templateObj);
 
     if (ok) {
-      draftSegments = [];
-      templateNameInput.value = '';
-      messageEl.textContent = '템플릿이 등록되었습니다.';
+      resetTemplateForm();
+      messageEl.textContent = isEditing ? '템플릿이 수정되었습니다.' : '템플릿이 등록되었습니다.';
     } else {
       // 이름·구간이 비었거나 LocalStorage 저장에 실패한 경우. 입력 중이던 구간은 그대로 남겨둔다.
-      messageEl.textContent = '템플릿 등록에 실패했습니다. 이름과 구간을 확인하세요.';
+      messageEl.textContent = (isEditing ? '템플릿 수정' : '템플릿 등록') + '에 실패했습니다. 이름과 구간을 확인하세요.';
     }
+    renderTemplateScreen();
+  });
+
+  // [수정 취소]: 폼에 불러온 내용을 버리고 새 템플릿 등록 모드로 돌아간다 (저장된 템플릿은 그대로).
+  document.getElementById('cancelTemplateEditBtn').addEventListener('click', function () {
+    resetTemplateForm();
+    document.getElementById('templateMessage').textContent = '';
     renderTemplateScreen();
   });
 
@@ -245,17 +276,33 @@ function bindTemplateFormEvents() {
     }
   });
 
-  // 등록된 템플릿 목록의 [내역등록]/[삭제] 버튼도 같은 이유로 이벤트 위임을 사용한다.
+  // 등록된 템플릿 목록의 [내역등록]/[수정]/[삭제] 버튼도 같은 이유로 이벤트 위임을 사용한다.
   document.getElementById('templateListBody').addEventListener('click', function (e) {
     const name = e.target.dataset.name;
+    const messageEl = document.getElementById('templateMessage');
 
     if (e.target.classList.contains('register-log-btn')) {
       const ok = addLogFromTemplate(name);
-      document.getElementById('templateMessage').textContent =
+      messageEl.textContent =
         ok ? '"' + name + '" 템플릿으로 사용 내역이 등록되었습니다.' : '내역 등록에 실패했습니다.';
+    } else if (e.target.classList.contains('edit-template-btn')) {
+      // 템플릿의 이름·구간을 폼에 불러온다. 구간은 복사본을 쓰므로, 폼에서 구간을 추가/제거해도
+      // [수정 내용 저장]을 누르기 전까지 저장된 템플릿에는 영향이 없다.
+      const template = getTemplateByName(name);
+      editingTemplateName = template.Name;
+      draftSegments = template.TPList.map(function (seg) {
+        return Object.assign({}, seg);
+      });
+      templateNameInput.value = template.Name;
+      messageEl.textContent = '구간을 추가·제거하거나 이름을 바꾼 뒤 [수정 내용 저장]을 누르세요.';
+      renderTemplateScreen();
     } else if (e.target.classList.contains('delete-template-btn')) {
       if (!deleteTemplate(name)) {
-        document.getElementById('templateMessage').textContent = '템플릿 삭제에 실패했습니다.';
+        messageEl.textContent = '템플릿 삭제에 실패했습니다.';
+      } else if (name === editingTemplateName) {
+        // 수정 중이던 템플릿을 삭제했다면 수정할 대상이 사라졌으므로 폼도 비운다.
+        resetTemplateForm();
+        messageEl.textContent = '';
       }
       renderTemplateScreen();
     }

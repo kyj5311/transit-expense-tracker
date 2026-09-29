@@ -1,5 +1,5 @@
 /* ============================================================
-   TemplateModule (FR-02, FR-06, 설계서 4.2)
+   TemplateModule (FR-02, FR-06, 설계서 4.2) — 템플릿 등록·수정·삭제
    사용자가 자주 쓰는 노선을 "템플릿"으로 등록해두고 재사용한다.
    템플릿 하나 = 이름(Name) + 여러 개의 구간(TPList).
    예: "출근길" 템플릿 = [ 대구3호선 지하철 구간, 724번 버스 구간 ]
@@ -46,6 +46,40 @@ function addTemplate(templateObj) {
   }
 
   const nextList = templateList.concat([{ Name: name, TPList: templateObj.TPList }]);
+
+  if (!save('templateData', nextList)) {
+    return false;
+  }
+
+  templateList = nextList;
+  return true;
+}
+
+// 기존 템플릿(originalName)의 이름과 구간 목록을 templateObj 내용으로 바꾼다. (FR-06)
+// templateObj 형태는 addTemplate()과 같다: { Name, TPList }
+// - 이름이 비었거나 구간이 하나도 없으면 false (addTemplate과 같은 검증, EH-01)
+// - 이름을 바꾸는데 그 이름을 이미 "다른" 템플릿이 쓰고 있으면 false (식별 키 중복 방지)
+//   이름을 그대로 두고 구간만 고치는 경우는 자기 자신과 이름이 같은 것이므로 허용한다.
+// - 저장 순서는 addTemplate과 같다: 새 배열을 먼저 저장해보고, 성공했을 때만 templateList를 교체 (EH-02)
+// 이미 이 템플릿으로 등록해둔 사용 내역은 등록 시점에 값을 복사해둔 것이라 바뀌지 않는다.
+// 성공하면 true, 대상 템플릿이 없거나 위 조건에 걸리거나 저장에 실패하면 false를 반환한다.
+function updateTemplate(originalName, templateObj) {
+  const index = templateList.findIndex(function (template) {
+    return template.Name === originalName;
+  });
+  const name = templateObj.Name.trim();
+
+  if (index === -1 || !name || !templateObj.TPList || templateObj.TPList.length === 0) {
+    return false;
+  }
+
+  if (name !== originalName && getTemplateByName(name)) {
+    return false;
+  }
+
+  const nextList = templateList.map(function (template, i) {
+    return i === index ? { Name: name, TPList: templateObj.TPList } : template;
+  });
 
   if (!save('templateData', nextList)) {
     return false;

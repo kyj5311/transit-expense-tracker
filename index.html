@@ -53,7 +53,7 @@
 
     <!-- UI-02 노선 템플릿 등록 화면 -->
     <section id="view-template" class="view" hidden>
-      <h2>새 구간 추가</h2>
+      <h2 id="templateFormTitle">새 구간 추가</h2>
       <div class="inline-form">
         <input type="text" id="segmentName" placeholder="노선명 (예: 대구 3호선)">
         <select id="segmentType">
@@ -75,6 +75,7 @@
       <div class="inline-form">
         <input type="text" id="templateNameInput" placeholder="템플릿 이름 (예: 출근길)">
         <button type="button" id="saveTemplateBtn" disabled>템플릿으로 저장</button>
+        <button type="button" id="cancelTemplateEditBtn" hidden>수정 취소</button>
       </div>
 
       <p id="templateMessage" class="message"></p>

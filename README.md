@@ -42,6 +42,9 @@
    누른다.
 3. 등록된 템플릿은 아래 "등록된 템플릿 목록"에 구간 수와 함께 나타난다.
    - **[내역등록]**: 그 템플릿의 구간 수만큼 "사용 내역"에 한 번에 등록한다.
+   - **[수정]**: 템플릿의 이름과 구간을 위쪽 입력 폼에 불러온다. 구간을 추가/제거하거나 이름을
+     바꾼 뒤 **[수정 내용 저장]**을 누르면 반영되고, **[수정 취소]**를 누르면 그대로 유지된다.
+     이미 등록해둔 사용 내역은 바뀌지 않는다.
    - **[삭제]**: 템플릿을 목록에서 삭제한다.
 
 ### 2) 사용 내역
@@ -76,7 +79,7 @@ style.css            전체 스타일시트
 js/
   storageModule.js    LocalStorage 저장/로드 공통 처리 (save/load)
   fareModule.js        지역·교통수단·요금등급별 기본 요금 + 환승 할인율 관리
-  templateModule.js    노선 템플릿 등록/조회/삭제
+  templateModule.js    노선 템플릿 등록/조회/수정/삭제
   logModule.js          사용 내역 등록(템플릿 기반/직접)/수정/삭제
   paymentCalcModule.js  선택된 내역의 총 지불 금액 계산
   uiModule.js            화면 렌더링 + 이벤트 바인딩 (다른 모든 모듈을 사용)
@@ -95,7 +98,7 @@ docs/
 |---|---|---|
 | StorageModule | `js/storageModule.js` | `save(key, data)` / `load(key)` — LocalStorage 저장·로드를 try-catch로 감싸 공통 처리 |
 | FareModule | `js/fareModule.js` | 지역별 기본 요금·환승 할인율(TransferDC) 관리, 앱 최초 실행 시 기본값 시드 |
-| TemplateModule | `js/templateModule.js` | 노선 템플릿 등록(`addTemplate`)/조회/삭제 |
+| TemplateModule | `js/templateModule.js` | 노선 템플릿 등록(`addTemplate`)/조회/수정(`updateTemplate`)/삭제 |
 | LogModule | `js/logModule.js` | 템플릿 기반 일괄 등록(`addLogFromTemplate`)/직접 등록/수정/삭제 |
 | PaymentCalcModule | `js/paymentCalcModule.js` | `calculatePayment(targetLogs, fareData)` — 내역 배열을 받아 총 지불 금액 계산 |
 | UIModule | `js/uiModule.js` | 화면 렌더링, 이벤트 바인딩. 계산·저장 로직은 갖지 않고 다른 모듈만 호출 |
