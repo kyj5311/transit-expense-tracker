@@ -138,7 +138,7 @@ function renderDashboard() {
 
   const tbody = document.getElementById('dashRecentLogs');
   tbody.innerHTML = recentLogs.map(function (log) {
-    return '<tr><td>' + formatDateTime(log.Time) + '</td><td>' + escapeHtml(log.Name) + '</td><td>' +
+    return '<tr><td>' + formatDateTime(log.Time) + '</td><td class="name-text">' + escapeHtml(log.Name) + '</td><td>' +
       TYPE_LABELS[log.Type] + (log.IsTransfer ? ' · 환승' : '') + '</td></tr>';
   }).join('');
 }
@@ -193,7 +193,7 @@ function renderTemplateScreen() {
 
   const tbody = document.getElementById('templateListBody');
   tbody.innerHTML = templateList.map(function (tpl) {
-    return '<tr><td>' + escapeHtml(tpl.Name) + '</td><td>' + tpl.TPList.length + '구간</td><td>' +
+    return '<tr><td class="name-text">' + escapeHtml(tpl.Name) + '</td><td>' + tpl.TPList.length + '구간</td><td>' +
       '<button type="button" class="register-log-btn" data-name="' + escapeHtml(tpl.Name) + '">내역등록</button>' +
       '<button type="button" class="edit-template-btn" data-name="' + escapeHtml(tpl.Name) + '">수정</button>' +
       '<button type="button" class="delete-template-btn" data-name="' + escapeHtml(tpl.Name) + '">삭제</button></td></tr>';
@@ -331,7 +331,7 @@ function renderLogScreen() {
       return '<tr>' +
         '<td></td>' +
         '<td>' + formatDateTime(log.Time) + '</td>' +
-        '<td><input type="text" class="edit-name-input" value="' + escapeHtml(log.Name) + '"></td>' +
+        '<td><input type="text" class="edit-name-input" maxlength="30" value="' + escapeHtml(log.Name) + '"></td>' +
         '<td><select class="edit-type-select">' +
           '<option value="Train"' + (log.Type === 'Train' ? ' selected' : '') + '>지하철</option>' +
           '<option value="Bus"' + (log.Type === 'Bus' ? ' selected' : '') + '>버스</option>' +
@@ -347,7 +347,7 @@ function renderLogScreen() {
       '<td><input type="checkbox" class="log-select-checkbox" data-time="' + log.Time + '"' +
         (selectedLogTimes.has(log.Time) ? ' checked' : '') + '></td>' +
       '<td>' + formatDateTime(log.Time) + '</td>' +
-      '<td>' + escapeHtml(log.Name) + '</td>' +
+      '<td class="name-text">' + escapeHtml(log.Name) + '</td>' +
       '<td>' + TYPE_LABELS[log.Type] + '</td>' +
       '<td>' + (log.IsTransfer ? '환승' : '-') + '</td>' +
       '<td>' +
@@ -488,13 +488,13 @@ function renderPaymentScreen() {
 
     // 요금 데이터에 없는 지역 등이라 요금을 찾지 못한 내역: 멈추지 않고 0원으로 계산됐음을 표시한다.
     if (!detail) {
-      return '<tr><td>' + escapeHtml(log.Name) + '</td><td>요금 정보 없음</td><td>-</td><td>' +
+      return '<tr><td class="name-text">' + escapeHtml(log.Name) + '</td><td>요금 정보 없음</td><td>-</td><td>' +
         formatWon(0) + '</td></tr>';
     }
 
     const transferText = log.IsTransfer ? '× ' + Math.round(detail.transferDC * 100) + '%' : '-';
 
-    return '<tr><td>' + escapeHtml(log.Name) + '</td><td>' + formatWon(detail.baseFare) + '</td><td>' +
+    return '<tr><td class="name-text">' + escapeHtml(log.Name) + '</td><td>' + formatWon(detail.baseFare) + '</td><td>' +
       transferText + '</td><td>' + formatWon(detail.finalFare) + '</td></tr>';
   }).join('');
 }

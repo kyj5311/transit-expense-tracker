@@ -53,9 +53,10 @@
 
     <!-- UI-02 노선 템플릿 등록 화면 -->
     <section id="view-template" class="view" hidden>
-      <h2 id="templateFormTitle">새 구간 추가</h2>
+      <h2 id="templateFormTitle" class="name-text">새 구간 추가</h2>
+      <!-- 이름 입력칸 4곳(구간 노선명·템플릿 이름·직접 등록 노선명·내역 수정 노선명)은 최대 30자 (EH-01) -->
       <div class="inline-form">
-        <input type="text" id="segmentName" placeholder="노선명 (예: 대구 3호선)">
+        <input type="text" id="segmentName" maxlength="30" placeholder="노선명 (예: 대구 3호선)">
         <select id="segmentType">
           <option value="Train">지하철</option>
           <option value="Bus">버스</option>
@@ -73,7 +74,7 @@
       <div id="draftSegmentList" class="draft-list"></div>
 
       <div class="inline-form">
-        <input type="text" id="templateNameInput" placeholder="템플릿 이름 (예: 출근길)">
+        <input type="text" id="templateNameInput" maxlength="30" placeholder="템플릿 이름 (예: 출근길)">
         <button type="button" id="saveTemplateBtn" disabled>템플릿으로 저장</button>
         <button type="button" id="cancelTemplateEditBtn" hidden>수정 취소</button>
       </div>
@@ -92,7 +93,7 @@
       <!-- 템플릿 없이 사용 내역 1건 직접 등록 (등록 시각은 버튼을 누른 시각으로 자동 기록) -->
       <h2>사용 내역 직접 등록</h2>
       <div class="inline-form">
-        <input type="text" id="directLogName" placeholder="노선명 (예: 대구 3호선)">
+        <input type="text" id="directLogName" maxlength="30" placeholder="노선명 (예: 대구 3호선)">
         <select id="directLogType">
           <option value="Train">지하철</option>
           <option value="Bus">버스</option>
