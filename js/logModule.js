@@ -78,6 +78,7 @@ function commitLogList(nextList) {
 }
 
 // 템플릿을 거치지 않고 사용 내역 1건을 직접 등록한다. (4.1 표의 "입력: 템플릿 또는 직접 입력값" 중 후자)
+// 사용 내역 화면(UI-03)의 [직접 등록] 버튼에서 호출한다. 등록 시각(Time)은 호출 시각으로 자동 발급한다.
 // logObj 형태: { Name, Type, Region, AgeType, IsTransfer }
 // Name은 사용자가 직접 타이핑하는 값이라 trim() 처리한다 (EH-01).
 function addLog(logObj) {

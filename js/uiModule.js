@@ -145,12 +145,15 @@ function renderDashboard() {
 
 /* ---------- UI-02 노선 템플릿 등록 ---------- */
 
-// fareData.Region의 지역명으로 "지역" select의 option을 채운다. (앱 시작 시 1회 호출)
+// fareData.Region의 지역명으로 "지역" select들의 option을 채운다. (앱 시작 시 1회 호출)
+// 템플릿 구간 입력(UI-02)과 사용 내역 직접 등록(UI-03) 두 곳의 지역 목록이 같은 요금 데이터를 쓴다.
 function populateRegionOptions() {
-  const select = document.getElementById('segmentRegion');
-  select.innerHTML = fareData.Region.map(function (region) {
+  const optionsHtml = fareData.Region.map(function (region) {
     return '<option value="' + escapeHtml(region.Name) + '">' + escapeHtml(region.Name) + '</option>';
   }).join('');
+
+  document.getElementById('segmentRegion').innerHTML = optionsHtml;
+  document.getElementById('directLogRegion').innerHTML = optionsHtml;
 }
 
 // "템플릿으로 저장" 버튼은 구간이 하나 이상 추가되어 있고, 템플릿 이름도 입력되어 있어야 눌린다.
@@ -354,9 +357,43 @@ function renderLogScreen() {
   }).join('');
 }
 
-// UI-03 화면의 이벤트를 연결한다: 조회 단위 변경, 선택 내역 지불 계산, 행별 수정/삭제/저장/취소,
-// 체크박스 선택. (앱 시작 시 1회 호출)
+// UI-03 화면의 이벤트를 연결한다: 사용 내역 직접 등록, 조회 단위 변경, 선택 내역 지불 계산,
+// 행별 수정/삭제/저장/취소, 체크박스 선택. (앱 시작 시 1회 호출)
 function bindLogScreenEvents() {
+  const directNameInput = document.getElementById('directLogName');
+  const addDirectLogBtn = document.getElementById('addDirectLogBtn');
+
+  // 노선명이 비어 있으면(trim 기준) [직접 등록] 버튼을 비활성화한다 (EH-01, 템플릿 구간 추가와 동일).
+  directNameInput.addEventListener('input', function () {
+    addDirectLogBtn.disabled = directNameInput.value.trim().length === 0;
+  });
+
+  // 템플릿을 거치지 않고 사용 내역 1건을 등록한다 (FR-03 직접 입력, LogModule.addLog).
+  // 등록 시각(Time)은 addLog()가 버튼을 누른 시각으로 자동 발급한다.
+  addDirectLogBtn.addEventListener('click', function () {
+    const messageEl = document.getElementById('logMessage');
+    const ok = addLog({
+      Name: directNameInput.value,
+      Type: document.getElementById('directLogType').value,
+      Region: document.getElementById('directLogRegion').value,
+      AgeType: document.getElementById('directLogAgeType').value,
+      IsTransfer: document.getElementById('directLogIsTransfer').checked
+    });
+
+    if (ok) {
+      // 다음 입력을 위해 노선명·환승만 비운다. 교통수단·지역·요금등급은 연달아 등록할 때 같은 값을
+      // 쓰는 경우가 많아서 그대로 둔다 (템플릿 구간 추가와 같은 방식).
+      directNameInput.value = '';
+      document.getElementById('directLogIsTransfer').checked = false;
+      addDirectLogBtn.disabled = true;
+      messageEl.textContent = '사용 내역이 등록되었습니다.';
+    } else {
+      // 노선명이 비었거나 LocalStorage 저장에 실패한 경우. 입력값은 그대로 남겨둔다.
+      messageEl.textContent = '사용 내역 등록에 실패했습니다. 노선명을 확인하세요.';
+    }
+    renderLogScreen();
+  });
+
   document.getElementById('logFilterSelect').addEventListener('change', renderLogScreen);
 
   document.getElementById('calcSelectedBtn').addEventListener('click', function () {

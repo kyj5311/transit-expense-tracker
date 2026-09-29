@@ -89,6 +89,26 @@
 
     <!-- UI-03 사용 내역 목록 화면 -->
     <section id="view-log" class="view" hidden>
+      <!-- 템플릿 없이 사용 내역 1건 직접 등록 (등록 시각은 버튼을 누른 시각으로 자동 기록) -->
+      <h2>사용 내역 직접 등록</h2>
+      <div class="inline-form">
+        <input type="text" id="directLogName" placeholder="노선명 (예: 대구 3호선)">
+        <select id="directLogType">
+          <option value="Train">지하철</option>
+          <option value="Bus">버스</option>
+        </select>
+        <select id="directLogRegion"></select>
+        <select id="directLogAgeType">
+          <option value="Adult">성인</option>
+          <option value="Youth">청소년</option>
+          <option value="Child">어린이</option>
+        </select>
+        <label class="checkbox-label"><input type="checkbox" id="directLogIsTransfer"> 환승</label>
+        <button type="button" id="addDirectLogBtn" disabled>직접 등록</button>
+      </div>
+      <p id="logMessage" class="message"></p>
+
+      <h2>사용 내역 목록</h2>
       <div class="toolbar">
         <label>조회:
           <select id="logFilterSelect">
