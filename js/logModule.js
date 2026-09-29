@@ -24,10 +24,31 @@ function issueLogTime() {
   return new Date(lastIssuedTime).toISOString();
 }
 
+// 내역 하나가 화면에서 쓸 수 있는 형태인지 검사한다 (EH-02, 검수 결함 ERROR-01).
+// 앱이 멈추지 않는 데 필요한 것만 본다: 식별 키이자 정렬 기준인 등록 시각(Time)이 문자열인지.
+// 교통수단·지역·요금등급은 검사하지 않는다 — 요금표에 없는 값은 findFare()가 0원으로 처리한다.
+function isValidLog(log) {
+  return !!log && typeof log.Time === 'string';
+}
+
 // 앱 실행 시마다 호출한다. LocalStorage에 저장된 logData가 있으면 불러오고, 없으면 빈 배열로 시작한다.
+// 저장된 값이 배열이 아니면 빈 배열로, 깨진 내역이 섞여 있으면 그 항목만 빼고 시작한다.
+// 이때 LocalStorage는 바로 덮어쓰지 않는다 (다음 등록·수정·삭제 때 정상 목록으로 저장됨).
 function initLogData() {
   const loaded = load('logData');
-  logList = loaded ? loaded : [];
+
+  if (loaded === null) {
+    logList = [];
+  } else if (!Array.isArray(loaded)) {
+    console.warn('[LogModule] 저장된 사용 내역 데이터가 배열이 아니어서 빈 목록으로 시작합니다:', loaded);
+    logList = [];
+  } else {
+    logList = loaded.filter(isValidLog);
+    if (logList.length !== loaded.length) {
+      console.warn('[LogModule] 형태가 올바르지 않은 사용 내역 ' + (loaded.length - logList.length) + '건을 제외했습니다.');
+    }
+  }
+
   return logList;
 }
 

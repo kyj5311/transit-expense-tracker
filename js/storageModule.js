@@ -22,6 +22,8 @@ function save(key, data) {
 // LocalStorage에서 key에 해당하는 데이터를 읽어와 원래 객체 형태로 돌려준다.
 // 저장된 값이 없거나, 저장된 문자열이 손상되어 파싱에 실패하면 null을 반환하고 콘솔에 경고를 남긴다.
 // 호출하는 쪽(FareModule 등)은 null을 "저장된 데이터 없음"으로 판단해 기본값 등을 채워 넣으면 된다.
+// 파싱에 성공해도 모양이 틀린 값(예: 객체 자리에 문자열)은 그대로 돌려준다 — 올바른 모양은 데이터마다
+// 다르므로, 형태 검사는 각 모듈의 init 함수(isValidFareData/isValidTemplate/isValidLog)가 맡는다.
 function load(key) {
   try {
     const json = localStorage.getItem(key);

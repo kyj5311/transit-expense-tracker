@@ -9,12 +9,33 @@
 // initTemplateData()가 호출되기 전에는 빈 배열로 시작한다.
 let templateList = [];
 
+// 템플릿 하나가 화면에서 쓸 수 있는 형태인지 검사한다 (EH-02, 검수 결함 ERROR-01).
+// 앱이 멈추지 않는 데 필요한 것만 본다: 이름(Name)이 문자열이고 구간 목록(TPList)이 배열인지.
+// 구간 안의 교통수단·지역·요금등급은 검사하지 않는다 — 요금표에 없는 값은 findFare()가 0원으로 처리한다.
+function isValidTemplate(template) {
+  return !!template && typeof template.Name === 'string' && Array.isArray(template.TPList);
+}
+
 // 앱 실행 시마다 호출한다. LocalStorage에 저장된 templateData가 있으면 불러오고,
 // 없으면(최초 실행) 빈 배열로 시작한다.
 // FareModule과 달리 템플릿은 "기본으로 내장된 값"이 없다 — 전부 사용자가 화면에서 등록한 것이기 때문.
+// 저장된 값이 배열이 아니면 빈 배열로, 깨진 템플릿이 섞여 있으면 그 항목만 빼고 시작한다.
+// 이때 LocalStorage는 바로 덮어쓰지 않는다 (다음 등록·수정·삭제 때 정상 목록으로 저장됨).
 function initTemplateData() {
   const loaded = load('templateData');
-  templateList = loaded ? loaded : [];
+
+  if (loaded === null) {
+    templateList = [];
+  } else if (!Array.isArray(loaded)) {
+    console.warn('[TemplateModule] 저장된 템플릿 데이터가 배열이 아니어서 빈 목록으로 시작합니다:', loaded);
+    templateList = [];
+  } else {
+    templateList = loaded.filter(isValidTemplate);
+    if (templateList.length !== loaded.length) {
+      console.warn('[TemplateModule] 형태가 올바르지 않은 템플릿 ' + (loaded.length - templateList.length) + '개를 제외했습니다.');
+    }
+  }
+
   return templateList;
 }
 

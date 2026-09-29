@@ -33,15 +33,30 @@ const DEFAULT_FARE_DATA = {
 // initFareData()가 호출되기 전에는 아직 값이 없으므로 null로 시작한다.
 let fareData = null;
 
+// 불러온 요금 데이터가 앱이 쓸 수 있는 형태인지 검사한다 (EH-02, 검수 결함 ERROR-01).
+// Region이 비어 있지 않은 배열이고, 각 지역이 이름(Name)을 가진 객체여야 한다.
+// 기본 요금과 "같은 값"인지는 보지 않는다 — 예전 버전에서 저장된 요금 데이터('구미' 없음 등)도
+// 형태만 맞으면 그대로 쓰고, 요금표에 없는 지역은 findFare()가 0원으로 처리한다.
+function isValidFareData(data) {
+  return !!data && Array.isArray(data.Region) && data.Region.length > 0 &&
+    data.Region.every(function (region) {
+      return !!region && typeof region.Name === 'string';
+    });
+}
+
 // 앱 최초 실행 시 1회 호출되는 함수.
 // LocalStorage에 저장된 fareData가 있으면 그대로 불러오고,
 // 없으면(최초 실행) 기본 요금 데이터를 사용하고 StorageModule을 통해 1회 저장한다.
+// 저장된 값이 잘못된 형태(예: 객체 자리에 문자열)이면 앱이 멈추지 않도록 기본 요금 데이터로 초기화한다.
 function initFareData() {
   const loaded = load('fareData');
 
-  if (loaded) {
+  if (isValidFareData(loaded)) {
     fareData = loaded;
   } else {
+    if (loaded !== null) {
+      console.warn('[FareModule] 저장된 요금 데이터 형태가 올바르지 않아 기본 요금 데이터로 초기화합니다:', loaded);
+    }
     fareData = DEFAULT_FARE_DATA;
     save('fareData', fareData);
   }
